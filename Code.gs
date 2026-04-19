@@ -3,7 +3,7 @@
 // Five Elements International School — Team The Page Pioneer
 // ============================================================
 
-const SPREADSHEET_ID = ''; // SET YOUR SPREADSHEET ID
+const SPREADSHEET_ID = '1KLm0CdoQLiY8Qmf4uI6eALIBCXtnGUNesFvYrNw4lIw';
 const BOOKS_SHEET = 'Books';
 const BORROWS_SHEET = 'Borrows';
 const USERS_SHEET = 'Users';
