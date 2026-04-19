@@ -138,7 +138,7 @@
 </div>
 
 <script>
-const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwmwEAirZsC-I9MQjSl89GKG7Men8IC6vx3H8omveRhH5lCcMbrZGcCnD-Cmvn3Zcow/exec';
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbyukvbsM2OMuJg435uPL4xpQK_GPWMnmHUFEQhUa5sgT2jnmiG7DmPF8QyHgjg6zB6M/exec';
 let books=[],borrows=[],categories=[],currentUser=null;
 const F=url=>fetch(url,{redirect:'follow'}).then(r=>r.json());
 const P=async(body)=>{const r=await fetch(SCRIPT_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({...body,auth:{username:currentUser.username,password:currentUser._pw}})});try{return await r.json();}catch(e){return{};}};
