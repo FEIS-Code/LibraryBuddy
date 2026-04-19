@@ -61,6 +61,7 @@
         <select id="bfilter" onchange="renderBorrows()" class="px-3 py-2 border rounded-lg text-sm"><option value="">All</option><option value="Borrowed">Active</option><option value="Returned">Returned</option></select>
       </div>
       <div id="borrow-list" class="space-y-2"></div>
+      <p id="no-borrows" class="hidden text-center text-gray-400 py-8">No borrow records yet. Issue a book from the Books tab.</p>
     </div>
 
     <!-- OVERDUE TAB -->
@@ -177,9 +178,12 @@ function renderBooks(){
   }).join('');
 }
 
-function renderBorrows(){
+async function renderBorrows(){
+  showL('borrow-list');
+  borrows = await F(SCRIPT_URL+'?action=borrows');
   const st=document.getElementById('bfilter').value;
   const f=borrows.filter(b=>!st||b.Status===st).slice().reverse();
+  document.getElementById('no-borrows').classList.toggle('hidden',f.length>0);
   document.getElementById('borrow-list').innerHTML=f.map(b=>{
     const isActive=b.Status==='Borrowed';
     return `<div class="bg-white rounded-lg shadow p-3 border-l-4 ${isActive?'border-indigo-500':'border-gray-300'}">
