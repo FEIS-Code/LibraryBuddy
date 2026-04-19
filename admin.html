@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Library Buddy — Admin</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap'); body{font-family:'Inter',sans-serif;}</style>
+</head>
+<body class="min-h-screen bg-gray-50">
+<header class="bg-white shadow-md p-3 sm:p-4 sticky top-0 z-20">
+  <div class="max-w-5xl mx-auto flex justify-between items-center">
+    <h1 class="text-base sm:text-xl font-extrabold"><span class="text-amber-600">Library Buddy</span> <span class="text-gray-600">Admin</span></h1>
+    <div class="flex items-center gap-2">
+      <span id="user-badge" class="hidden text-xs font-medium text-indigo-700 bg-indigo-50 px-2 py-1 rounded-full"></span>
+      <button id="logout-btn" onclick="logout()" class="hidden px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-xs font-semibold">Logout</button>
+    </div>
+  </div>
+</header>
+
+<!-- LOGIN -->
+<div id="login-screen" class="max-w-sm mx-auto mt-20 p-3">
+  <div class="bg-white rounded-xl shadow-lg p-6">
+    <h2 class="text-lg font-bold text-amber-600 mb-4 text-center">Admin Login</h2>
+    <form id="login-form" class="space-y-3">
+      <input id="login-user" type="text" required placeholder="Username" class="w-full rounded-lg border p-2.5 text-sm">
+      <input id="login-pass" type="password" required placeholder="Password" class="w-full rounded-lg border p-2.5 text-sm">
+      <p id="login-error" class="text-red-600 text-xs hidden"></p>
+      <button type="submit" class="w-full py-2.5 bg-amber-600 text-white font-semibold rounded-lg text-sm">Login</button>
+    </form>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="admin" class="hidden">
+  <div class="max-w-5xl mx-auto px-3 pt-3">
+    <div class="flex gap-1 border-b overflow-x-auto">
+      <button onclick="tab('books')" data-tab="books" class="tbtn px-3 py-2 text-xs sm:text-sm font-semibold border-b-2 border-amber-600 text-amber-600 whitespace-nowrap">Books</button>
+      <button onclick="tab('borrows')" data-tab="borrows" class="tbtn px-3 py-2 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-gray-500 whitespace-nowrap">Borrows</button>
+      <button onclick="tab('overdue')" data-tab="overdue" class="tbtn px-3 py-2 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-gray-500 whitespace-nowrap">⚠ Overdue</button>
+      <button onclick="tab('stats')" data-tab="stats" class="tbtn px-3 py-2 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-gray-500 whitespace-nowrap">Stats</button>
+      <button onclick="tab('settings')" data-tab="settings" class="tbtn px-3 py-2 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-gray-500 whitespace-nowrap">Settings</button>
+    </div>
+  </div>
+  <main class="max-w-5xl mx-auto p-3 sm:p-6">
+
+    <!-- BOOKS TAB -->
+    <div id="t-books">
+      <div class="flex flex-col sm:flex-row gap-2 mb-4">
+        <input id="search" type="text" placeholder="Search..." oninput="renderBooks()" class="flex-1 px-3 py-2 border rounded-lg text-sm">
+        <select id="fcat" onchange="renderBooks()" class="px-3 py-2 border rounded-lg text-sm"><option value="">All Categories</option></select>
+        <button onclick="openBookModal()" class="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-semibold whitespace-nowrap">+ Add Book</button>
+      </div>
+      <div id="book-list" class="space-y-2"></div>
+    </div>
+
+    <!-- BORROWS TAB -->
+    <div id="t-borrows" class="hidden">
+      <div class="flex gap-2 mb-4">
+        <select id="bfilter" onchange="renderBorrows()" class="px-3 py-2 border rounded-lg text-sm"><option value="">All</option><option value="Borrowed">Active</option><option value="Returned">Returned</option></select>
+      </div>
+      <div id="borrow-list" class="space-y-2"></div>
+    </div>
+
+    <!-- OVERDUE TAB -->
+    <div id="t-overdue" class="hidden"><div id="overdue-list" class="space-y-2"></div><p id="no-overdue" class="hidden text-center text-green-600 py-8 font-medium">No overdue books! ✓</p></div>
+
+    <!-- STATS TAB -->
+    <div id="t-stats" class="hidden">
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
+        <div class="bg-white rounded-xl shadow p-4 text-center"><div class="text-2xl font-bold text-amber-600" id="s-books">0</div><div class="text-xs text-gray-500">Books</div></div>
+        <div class="bg-white rounded-xl shadow p-4 text-center"><div class="text-2xl font-bold text-blue-600" id="s-copies">0</div><div class="text-xs text-gray-500">Total Copies</div></div>
+        <div class="bg-white rounded-xl shadow p-4 text-center"><div class="text-2xl font-bold text-green-600" id="s-avail">0</div><div class="text-xs text-gray-500">Available</div></div>
+        <div class="bg-white rounded-xl shadow p-4 text-center"><div class="text-2xl font-bold text-indigo-600" id="s-borrowed">0</div><div class="text-xs text-gray-500">Borrowed</div></div>
+        <div class="bg-white rounded-xl shadow p-4 text-center"><div class="text-2xl font-bold text-red-500" id="s-overdue">0</div><div class="text-xs text-gray-500">Overdue</div></div>
+      </div>
+      <div class="bg-white rounded-xl shadow p-4"><h3 class="font-bold text-sm mb-2">By Category</h3><div id="s-cats"></div></div>
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div id="t-settings" class="hidden space-y-4">
+      <div class="bg-white rounded-xl shadow p-4">
+        <h3 class="font-bold text-sm mb-2">Categories</h3>
+        <div id="cat-tags" class="flex flex-wrap gap-2 mb-2"></div>
+        <div class="flex gap-2"><input id="new-cat" type="text" placeholder="New" class="rounded border p-2 text-sm flex-1"><button onclick="addCat()" class="text-amber-600 text-sm font-medium">+ Add</button></div>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="saveCats()" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold">Save</button>
+        <button onclick="runSetup()" class="px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-semibold">Setup Data</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- BOOK MODAL -->
+<div id="book-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm p-4 overflow-y-auto">
+  <div class="bg-white p-5 rounded-xl shadow-2xl w-full max-w-md m-auto">
+    <div class="flex justify-between items-center mb-4 border-b pb-2">
+      <h2 id="bm-title" class="text-lg font-bold text-amber-600">Add Book</h2>
+      <button onclick="closeM('book-modal')" class="text-gray-400 hover:text-gray-600">✕</button>
+    </div>
+    <form id="book-form" class="space-y-3">
+      <input type="hidden" id="bk-id">
+      <div><label class="text-xs font-medium text-gray-700">Title</label><input id="bk-title" required class="w-full rounded-lg border p-2 text-sm mt-1"></div>
+      <div><label class="text-xs font-medium text-gray-700">Author</label><input id="bk-author" required class="w-full rounded-lg border p-2 text-sm mt-1"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs font-medium text-gray-700">Category</label><select id="bk-cat" class="w-full rounded-lg border p-2 text-sm mt-1"></select></div>
+        <div><label class="text-xs font-medium text-gray-700">Shelf</label><input id="bk-shelf" class="w-full rounded-lg border p-2 text-sm mt-1"></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs font-medium text-gray-700">Total Copies</label><input id="bk-copies" type="number" min="1" value="1" class="w-full rounded-lg border p-2 text-sm mt-1"></div>
+        <div><label class="text-xs font-medium text-gray-700">ISBN</label><input id="bk-isbn" class="w-full rounded-lg border p-2 text-sm mt-1"></div>
+      </div>
+      <button type="submit" id="bk-btn" class="w-full py-2.5 bg-amber-600 text-white font-semibold rounded-lg text-sm">Save</button>
+    </form>
+  </div>
+</div>
+
+<!-- BORROW MODAL -->
+<div id="borrow-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm p-4">
+  <div class="bg-white p-5 rounded-xl shadow-2xl w-full max-w-sm">
+    <div class="flex justify-between items-center mb-4 border-b pb-2">
+      <h2 class="text-lg font-bold text-indigo-600">Issue Book</h2>
+      <button onclick="closeM('borrow-modal')" class="text-gray-400 hover:text-gray-600">✕</button>
+    </div>
+    <form id="borrow-form" class="space-y-3">
+      <input type="hidden" id="br-bookid">
+      <div class="text-xs text-gray-500">Book: <span id="br-bookname" class="font-semibold text-gray-800"></span></div>
+      <div><label class="text-xs font-medium text-gray-700">Borrower Name</label><input id="br-name" required class="w-full rounded-lg border p-2 text-sm mt-1"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs font-medium text-gray-700">Grade</label><input id="br-grade" class="w-full rounded-lg border p-2 text-sm mt-1" placeholder="e.g. 9A"></div>
+        <div><label class="text-xs font-medium text-gray-700">Days</label><input id="br-days" type="number" min="1" value="14" class="w-full rounded-lg border p-2 text-sm mt-1"></div>
+      </div>
+      <button type="submit" class="w-full py-2.5 bg-indigo-600 text-white font-semibold rounded-lg text-sm">Issue</button>
+    </form>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL='YOUR_SCRIPT_URL';
+let books=[],borrows=[],categories=[],currentUser=null;
+const F=url=>fetch(url,{redirect:'follow'}).then(r=>r.json());
+const P=async(body)=>{const r=await fetch(SCRIPT_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({...body,auth:{username:currentUser.username,password:currentUser._pw}})});try{return await r.json();}catch(e){return{};}};
+function toast(msg){const t=document.createElement('div');t.className='fixed top-4 right-4 z-50 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2500);}
+function showL(id){document.getElementById(id).innerHTML='<div class="flex justify-center py-12"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div><span class="ml-3 text-gray-500 text-sm">Loading...</span></div>';}
+
+async function loadData(){
+  showL('book-list');
+  const [b,br,c]=await Promise.all([F(SCRIPT_URL+'?action=books'),F(SCRIPT_URL+'?action=borrows'),F(SCRIPT_URL+'?action=categories')]);
+  books=b;borrows=br;categories=c;
+  document.getElementById('fcat').innerHTML='<option value="">All Categories</option>'+c.map(x=>`<option>${x}</option>`).join('');
+  document.getElementById('bk-cat').innerHTML=c.map(x=>`<option>${x}</option>`).join('');
+  renderBooks();
+}
+
+function renderBooks(){
+  const s=document.getElementById('search').value.toLowerCase(),c=document.getElementById('fcat').value;
+  const f=books.filter(b=>(!c||b.Category===c)&&(!s||(b.Title||'').toLowerCase().includes(s)||(b.Author||'').toLowerCase().includes(s)));
+  document.getElementById('book-list').innerHTML=f.map(b=>{
+    const av=parseInt(b.Available)||0,tot=parseInt(b.TotalCopies)||0;
+    const bc=av===0?'border-red-500':av<=1?'border-amber-500':'border-green-500';
+    const badge=av===0?'bg-red-100 text-red-700':'bg-green-100 text-green-700';
+    return `<div class="bg-white rounded-lg shadow p-3 border-l-4 ${bc} flex flex-col sm:flex-row sm:items-center gap-2">
+      <div class="flex-1 min-w-0">
+        <div class="font-semibold text-sm truncate">${b.Title}</div>
+        <div class="text-xs text-gray-500">${b.Author} · ${b.Category} ${b.Shelf?'· Shelf '+b.Shelf:''}</div>
+      </div>
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <span class="text-sm font-bold">${av}/${tot}</span>
+        <span class="text-[10px] px-1.5 py-0.5 rounded-full ${badge}">${av===0?'Out':'Avail'}</span>
+        <button onclick="openBorrow('${b.ID}','${b.Title.replace(/'/g,"\\'")}')" class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-medium ${av===0?'opacity-50 cursor-not-allowed':''}" ${av===0?'disabled':''}>Issue</button>
+        <button onclick="openEditBook('${b.ID}')" class="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-medium">Edit</button>
+        <button onclick="delBook('${b.ID}')" class="px-2 py-1 text-red-400 text-xs hover:text-red-600">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderBorrows(){
+  const st=document.getElementById('bfilter').value;
+  const f=borrows.filter(b=>!st||b.Status===st).slice().reverse();
+  document.getElementById('borrow-list').innerHTML=f.map(b=>{
+    const isActive=b.Status==='Borrowed';
+    return `<div class="bg-white rounded-lg shadow p-3 border-l-4 ${isActive?'border-indigo-500':'border-gray-300'}">
+      <div class="flex justify-between items-start">
+        <div>
+          <div class="font-semibold text-sm">${b.BookTitle}</div>
+          <div class="text-xs text-gray-500">${b.Borrower} · ${b.Grade} · Borrowed: ${b.BorrowDate}</div>
+          <div class="text-xs ${isActive?'text-amber-600':'text-gray-400'}">Due: ${b.DueDate} ${b.ReturnDate?'· Returned: '+b.ReturnDate:''}</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs px-2 py-0.5 rounded-full ${isActive?'bg-indigo-100 text-indigo-700':'bg-gray-100 text-gray-500'}">${b.Status}</span>
+          ${isActive?`<button onclick="returnBk('${b.BorrowID}')" class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">Return</button>`:''}
+        </div>
+      </div>
+      <div class="text-[10px] text-gray-400 mt-1 font-mono">${b.BorrowID}</div>
+    </div>`;
+  }).join('');
+}
+
+async function renderOverdue(){
+  showL('overdue-list');
+  const od=await F(SCRIPT_URL+'?action=overdue');
+  document.getElementById('no-overdue').classList.toggle('hidden',od.length>0);
+  document.getElementById('overdue-list').innerHTML=od.map(b=>`
+    <div class="bg-white rounded-lg shadow p-3 border-l-4 border-red-500">
+      <div class="font-semibold text-sm">${b.BookTitle} <span class="text-red-600 text-xs">OVERDUE</span></div>
+      <div class="text-xs text-gray-500">${b.Borrower} · ${b.Grade} · Due: ${b.DueDate}</div>
+      <div class="flex gap-2 mt-1">
+        <button onclick="returnBk('${b.BorrowID}')" class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">Return</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function renderStats(){
+  const s=await F(SCRIPT_URL+'?action=stats');
+  document.getElementById('s-books').textContent=s.totalBooks;
+  document.getElementById('s-copies').textContent=s.totalCopies;
+  document.getElementById('s-avail').textContent=s.available;
+  document.getElementById('s-borrowed').textContent=s.activeBorrows;
+  document.getElementById('s-overdue').textContent=s.overdue;
+  document.getElementById('s-cats').innerHTML=Object.entries(s.categories).map(([k,v])=>`<div class="flex justify-between text-sm py-1 border-b"><span>${k}</span><span class="font-bold">${v}</span></div>`).join('');
+}
+
+// --- Modals ---
+function openM(id){const m=document.getElementById(id);m.classList.remove('hidden');m.classList.add('flex');}
+function closeM(id){const m=document.getElementById(id);m.classList.add('hidden');m.classList.remove('flex');}
+
+function openBookModal(){
+  document.getElementById('bm-title').textContent='Add Book';
+  document.getElementById('bk-id').value='';
+  document.getElementById('book-form').reset();
+  document.getElementById('bk-copies').value='1';
+  openM('book-modal');
+}
+function openEditBook(id){
+  const b=books.find(x=>x.ID===id);if(!b)return;
+  document.getElementById('bm-title').textContent='Edit Book';
+  document.getElementById('bk-id').value=id;
+  document.getElementById('bk-title').value=b.Title;
+  document.getElementById('bk-author').value=b.Author;
+  document.getElementById('bk-cat').value=b.Category;
+  document.getElementById('bk-shelf').value=b.Shelf||'';
+  document.getElementById('bk-copies').value=b.TotalCopies;
+  document.getElementById('bk-isbn').value=b.ISBN||'';
+  openM('book-modal');
+}
+async function handleBook(e){
+  e.preventDefault();
+  const btn=document.getElementById('bk-btn');btn.disabled=true;btn.textContent='Saving...';
+  const id=document.getElementById('bk-id').value;
+  const d={title:document.getElementById('bk-title').value,author:document.getElementById('bk-author').value,category:document.getElementById('bk-cat').value,shelf:document.getElementById('bk-shelf').value,totalCopies:document.getElementById('bk-copies').value,isbn:document.getElementById('bk-isbn').value};
+  if(id){d.action='updateBook';d.id=id;}else d.action='addBook';
+  await P(d);closeM('book-modal');btn.disabled=false;btn.textContent='Save';toast('Saved!');setTimeout(loadData,1500);
+}
+async function delBook(id){if(!confirm('Delete this book?'))return;await P({action:'deleteBook',id});toast('Deleted!');setTimeout(loadData,1500);}
+
+function openBorrow(bookId,title){
+  document.getElementById('br-bookid').value=bookId;
+  document.getElementById('br-bookname').textContent=title;
+  document.getElementById('borrow-form').reset();
+  document.getElementById('br-days').value='14';
+  openM('borrow-modal');
+}
+async function handleBorrow(e){
+  e.preventDefault();
+  const r=await P({action:'borrow',bookId:document.getElementById('br-bookid').value,borrower:document.getElementById('br-name').value,grade:document.getElementById('br-grade').value,days:document.getElementById('br-days').value});
+  closeM('borrow-modal');
+  if(r.success)toast('Issued! Due: '+r.dueDate);else toast(r.message||'Error');
+  setTimeout(loadData,1500);
+}
+async function returnBk(borrowId){
+  if(!confirm('Confirm return?'))return;
+  await P({action:'returnBook',borrowId});toast('Returned!');setTimeout(loadData,1500);
+}
+
+// --- Categories ---
+function renderCats(){
+  document.getElementById('cat-tags').innerHTML=categories.map((c,i)=>`<span class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-1 rounded-full text-xs">${c}<button onclick="categories.splice(${i},1);renderCats()" class="hover:text-red-500">&times;</button></span>`).join('');
+}
+function addCat(){const v=document.getElementById('new-cat').value.trim();if(v&&!categories.includes(v))categories.push(v);document.getElementById('new-cat').value='';renderCats();}
+async function saveCats(){await P({action:'saveCategories',items:categories});toast('Saved!');setTimeout(loadData,2000);}
+async function runSetup(){if(!confirm('Reset all data?'))return;await P({action:'setupData'});toast('Done!');setTimeout(loadData,3000);}
+
+// --- Tabs ---
+function tab(t){
+  ['books','borrows','overdue','stats','settings'].forEach(id=>document.getElementById('t-'+id).classList.toggle('hidden',id!==t));
+  document.querySelectorAll('.tbtn').forEach(b=>{const a=b.dataset.tab===t;b.className=`tbtn px-3 py-2 text-xs sm:text-sm font-semibold border-b-2 whitespace-nowrap ${a?'border-amber-600 text-amber-600':'border-transparent text-gray-500'}`;});
+  if(t==='borrows')renderBorrows();if(t==='overdue')renderOverdue();if(t==='stats')renderStats();if(t==='settings')renderCats();
+}
+
+// --- Auth ---
+async function handleLogin(e){
+  e.preventDefault();
+  const u=document.getElementById('login-user').value.trim(),p=document.getElementById('login-pass').value.trim();
+  try{
+    const r=await(await fetch(SCRIPT_URL,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'login',username:u,password:p})})).json();
+    if(r.success&&r.role==='admin'){currentUser={...r,_pw:p};sessionStorage.setItem('lbAdmin',JSON.stringify(currentUser));showAdmin();}
+    else{document.getElementById('login-error').textContent=r.message||'Admin only';document.getElementById('login-error').classList.remove('hidden');}
+  }catch(e){document.getElementById('login-error').textContent='Error';document.getElementById('login-error').classList.remove('hidden');}
+}
+function logout(){currentUser=null;sessionStorage.removeItem('lbAdmin');location.reload();}
+function showAdmin(){
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('admin').classList.remove('hidden');
+  document.getElementById('user-badge').textContent=currentUser.displayName;
+  document.getElementById('user-badge').classList.remove('hidden');
+  document.getElementById('logout-btn').classList.remove('hidden');
+  loadData();
+}
+
+window.onload=function(){
+  const s=sessionStorage.getItem('lbAdmin');
+  if(s){currentUser=JSON.parse(s);showAdmin();}
+  document.getElementById('login-form').addEventListener('submit',handleLogin);
+  document.getElementById('book-form').addEventListener('submit',handleBook);
+  document.getElementById('borrow-form').addEventListener('submit',handleBorrow);
+};
+</script>
+</body>
+</html>

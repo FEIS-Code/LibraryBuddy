@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Library Buddy — FEIS</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap'); body{font-family:'Inter',sans-serif;}</style>
+</head>
+<body class="min-h-screen bg-gray-50">
+<header class="bg-white shadow-md p-3 sm:p-4">
+  <div class="max-w-5xl mx-auto text-center">
+    <h1 class="text-xl sm:text-2xl font-extrabold"><span class="text-red-800">FEIS</span> <span class="text-amber-600">Library Buddy</span></h1>
+    <p class="text-gray-500 text-sm mt-1">Browse our book collection</p>
+  </div>
+</header>
+<main class="max-w-5xl mx-auto p-3 sm:p-6">
+  <div class="flex flex-col sm:flex-row gap-2 mb-4">
+    <input id="search" type="text" placeholder="Search books, authors..." oninput="render()" class="flex-1 px-3 py-2 border rounded-lg text-sm">
+    <select id="fcat" onchange="render()" class="px-3 py-2 border rounded-lg text-sm"><option value="">All Categories</option></select>
+  </div>
+  <div id="books" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+  <p id="empty" class="hidden text-center text-gray-400 py-8">No books found.</p>
+</main>
+<footer class="max-w-5xl mx-auto px-3 py-6 text-center text-gray-500">
+  <p class="font-semibold mb-1">An App by <span class="text-indigo-600 font-bold">Team The Page Pioneer</span></p>
+  <p class="text-xs">NirupRaghavendraredd &amp; Pranathi Reddy (Grade 9) &bull; Krishna Saanvi (Grade 8)</p>
+  <p class="text-xs">Ganesh Sai Nandan, Harika, Jaswanth &amp; Lalithya (Grade 7)</p>
+  <p class="text-xs text-gray-400 mt-1">Mentor: Ms. Prateeksha</p>
+</footer>
+<script>
+const SCRIPT_URL='YOUR_SCRIPT_URL';
+let books=[],categories=[];
+async function load(){
+  document.getElementById('books').innerHTML='<div class="col-span-full flex justify-center py-12"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div><span class="ml-3 text-gray-500 text-sm">Loading catalog...</span></div>';
+  try{
+    const [b,c]=await Promise.all([fetch(SCRIPT_URL+'?action=books',{redirect:'follow'}).then(r=>r.json()),fetch(SCRIPT_URL+'?action=categories',{redirect:'follow'}).then(r=>r.json())]);
+    books=b;categories=c;
+    document.getElementById('fcat').innerHTML='<option value="">All Categories</option>'+c.map(x=>`<option>${x}</option>`).join('');
+    render();
+  }catch(e){document.getElementById('books').innerHTML='<p class="text-red-500 col-span-full text-center py-8">Error loading catalog.</p>';}
+}
+function render(){
+  const s=document.getElementById('search').value.toLowerCase(),c=document.getElementById('fcat').value;
+  const f=books.filter(b=>(!c||b.Category===c)&&(!s||(b.Title||'').toLowerCase().includes(s)||(b.Author||'').toLowerCase().includes(s)));
+  document.getElementById('empty').classList.toggle('hidden',f.length>0);
+  document.getElementById('books').innerHTML=f.map(b=>{
+    const avail=parseInt(b.Available)||0, total=parseInt(b.TotalCopies)||0;
+    const color=avail===0?'border-red-500':avail<=1?'border-amber-500':'border-green-500';
+    const badge=avail===0?'bg-red-100 text-red-700':'bg-green-100 text-green-700';
+    return `<div class="bg-white rounded-xl shadow p-4 border-l-4 ${color}">
+      <h3 class="font-bold text-sm text-gray-800 mb-1">${b.Title}</h3>
+      <p class="text-xs text-gray-500 mb-2">by ${b.Author}</p>
+      <div class="flex flex-wrap gap-2 text-xs mb-2">
+        <span class="bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">${b.Category}</span>
+        <span class="${badge} px-2 py-0.5 rounded-full">${avail}/${total} available</span>
+      </div>
+      <div class="text-xs text-gray-400">${b.Shelf?'Shelf: '+b.Shelf:''} ${b.ISBN?'· ISBN: '+b.ISBN:''}</div>
+    </div>`;
+  }).join('');
+}
+window.onload=function(){load();};
+</script>
+</body>
+</html>
